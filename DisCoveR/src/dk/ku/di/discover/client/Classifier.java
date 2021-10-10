@@ -23,36 +23,32 @@
  */
 package dk.ku.di.discover.client;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
 
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.out.XesXmlSerializer;
-import org.qmpm.logtrie.exceptions.FileLoadException;
-import org.qmpm.logtrie.tools.XESTools;
 
-import dk.ku.di.dcrgraphs.BitDCRGraph;
 import dk.ku.di.dcrgraphs.DCRGraph;
 import dk.ku.di.discover.classifier.DCRClassifier;
+import dtu.processmining.XLogHelper;
 
 public class Classifier {
-	public static void classify(String logPath, String modelPath, String newLogPath, boolean openWorld) throws FileLoadException, IOException {
-		System.out.println("Classifying log: " + logPath + ", DCR Graph: " + modelPath + ", new log:" + newLogPath + ".");
-		XLog log = XESTools.loadXES(logPath, true);
+	public static void classify(String logPath, String modelPath, String newLogPath, boolean openWorld)
+			throws Exception, IOException {
+		System.out
+				.println("Classifying log: " + logPath + ", DCR Graph: " + modelPath + ", new log:" + newLogPath + ".");
+		XLog log = XLogHelper.readFile(logPath);
 
 		DCRGraph g = DCRGraph.fromCSVFormat(modelPath);
-				
+
 		DCRClassifier.classify(g, log, openWorld);
-		
-		saveFile(log, newLogPath);		
+
+		saveFile(log, newLogPath);
 	}
-	
-	
+
 	public static void saveFile(XLog log, String path) throws FileNotFoundException, IOException {
 
 		File f = new File(path);
@@ -63,5 +59,5 @@ public class Classifier {
 
 		XesXmlSerializer xesSerial = new XesXmlSerializer();
 		xesSerial.serialize(log, new FileOutputStream(f));
-	}	
+	}
 }

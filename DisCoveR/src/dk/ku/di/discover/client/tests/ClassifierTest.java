@@ -23,15 +23,11 @@
  */
 package dk.ku.di.discover.client.tests;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.IOException;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.qmpm.logtrie.exceptions.FileLoadException;
 
-import dk.ku.di.dcrgraphs.BitDCRGraph;
 import dk.ku.di.dcrgraphs.DCRGraph;
 import dk.ku.di.discover.client.Classifier;
 
@@ -42,14 +38,15 @@ class ClassifierTest {
 	}
 
 	@Test
-	void testCheckCompliance() throws FileLoadException, IOException {
-		Classifier.classify("./logs/classifytest.xes", "./dcrcsv/classifytest.csv", "./logs/classifytest_output.xes", false);
+	void testCheckCompliance() throws Exception, IOException {
+		Classifier.classify("./logs/classifytest.xes", "./dcrcsv/classifytest.csv", "./logs/classifytest_output.xes",
+				false);
 	}
-	
+
 	@Test
-	void testLoadCSV() throws FileLoadException, IOException {
+	void testLoadCSV() throws Exception, IOException {
 		DCRGraph g = DCRGraph.fromCSVFormat("./dcrcsv/dcr.csv");
-		System.out.println(g.toString());		
+		System.out.println(g.toString());
 	}
 
 }

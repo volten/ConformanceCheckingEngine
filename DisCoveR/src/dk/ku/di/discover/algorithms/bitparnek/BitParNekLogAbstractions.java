@@ -32,22 +32,20 @@ import java.util.Map.Entry;
 
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XTrace;
-import org.qmpm.logtrie.exceptions.LabelTypeException;
-import org.qmpm.logtrie.tools.XESTools;
+
+import dtu.processmining.XLogHelper;
 
 public class BitParNekLogAbstractions {
 	protected boolean extendedVersion = true;
-	
+
 	protected HashMap<String, Integer> ActivityToID = new HashMap<>();
 	protected HashMap<Integer, String> IDToActivity = new HashMap<>();
-	
-	public boolean containsActivity(String a)
-	{
+
+	public boolean containsActivity(String a) {
 		return ActivityToID.containsKey(a);
 	}
-	
-	public Integer getActivityID(String a)
-	{
+
+	public Integer getActivityID(String a) {
 		return ActivityToID.get(a);
 	}
 
@@ -73,17 +71,12 @@ public class BitParNekLogAbstractions {
 		LinkedList<Integer> t = new LinkedList<>();
 		for (XEvent event : trace) {
 			if (event != null) {
-				try {
-					String e = XESTools.xEventName(event);
-					if (!this.ActivityToID.containsKey(e)) {
-						this.addActivity(e);
-					}
-					int i = this.ActivityToID.get(e);
-					t.add(i);
-				} catch (LabelTypeException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				String e = XLogHelper.getName(event);
+				if (!this.ActivityToID.containsKey(e)) {
+					this.addActivity(e);
 				}
+				int i = this.ActivityToID.get(e);
+				t.add(i);
 			}
 		}
 		this.addTrace(t);
@@ -124,22 +117,20 @@ public class BitParNekLogAbstractions {
 		this.ActivityToID.put(a, i);
 		this.IDToActivity.put(i, a);
 	}
-	
-	public void borrowActivities(BitParNekLogAbstractions inspiration)
-	{
-		for (int i : inspiration.IDToActivity.keySet())
-		{
+
+	public void borrowActivities(BitParNekLogAbstractions inspiration) {
+		for (int i : inspiration.IDToActivity.keySet()) {
 			String a = inspiration.IDToActivity.get(i);
 			this.ActivityToID.put(a, i);
-			this.IDToActivity.put(i, a);		
+			this.IDToActivity.put(i, a);
 		}
 	}
-	
 
 	public void initActivities() {
 
 		for (int i : this.IDToActivity.keySet()) {
-			// TODO: not implemented yet (also not used by the miner at the moment, but useful for planned future improvements.)
+			// TODO: not implemented yet (also not used by the miner at the moment, but
+			// useful for planned future improvements.)
 			this.alternatePrecedence.put(i, new BitSet());
 			this.occursWith.put(i, new BitSet());
 
@@ -245,7 +236,6 @@ public class BitParNekLogAbstractions {
 		}
 
 	}
-
 
 	public Map<Integer, String> getIDActivityMap() {
 		return this.IDToActivity;

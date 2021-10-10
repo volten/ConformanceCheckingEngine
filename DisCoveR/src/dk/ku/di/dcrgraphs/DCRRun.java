@@ -26,8 +26,8 @@ package dk.ku.di.dcrgraphs;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
-import org.qmpm.logtrie.exceptions.LabelTypeException;
-import org.qmpm.logtrie.tools.XESTools;
+
+import dtu.processmining.XLogHelper;
 
 public class DCRRun {
 	static public boolean accepts(BitDCRGraph g, XLog log) {
@@ -36,29 +36,21 @@ public class DCRRun {
 			BitDCRMarking m = g.defaultInitialMarking();
 			for (XEvent event : trace) {
 				if (event != null) {
-					try {
-						String e = XESTools.xEventName(event);
-						if (!g.eventToId.containsKey(e))
-							return false;
-						int i = g.eventToId.get(e);
-						if (!g.enabled(m, i))
-							return false;
-						m = g.execute(m, i);
-					} catch (LabelTypeException e) {
+					String e = XLogHelper.getName(event);
+					if (!g.eventToId.containsKey(e))
 						return false;
-					}
+					int i = g.eventToId.get(e);
+					if (!g.enabled(m, i))
+						return false;
+					m = g.execute(m, i);
 				}
 			}
 			if (!m.isAccepting()) {
 				System.out.println("Non accepting trace: ");
 				for (XEvent event : trace) {
-					try {
-						String e = XESTools.xEventName(event);
-						int i = g.eventToId.get(e);
-						System.out.print(i + "; ");
-					} catch (LabelTypeException e) {
-						return false;
-					}
+					String e = XLogHelper.getName(event);
+					int i = g.eventToId.get(e);
+					System.out.print(i + "; ");
 				}
 				System.out.println();
 				return false;

@@ -23,71 +23,56 @@
  */
 package dk.ku.di.discover.classifier;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.deckfour.xes.model.XAttribute;
 import org.deckfour.xes.model.XAttributeMap;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
 import org.deckfour.xes.model.impl.XAttributeBooleanImpl;
-import org.qmpm.logtrie.exceptions.LabelTypeException;
-import org.qmpm.logtrie.tools.XESTools;
 
 import dk.ku.di.dcrgraphs.DCRGraph;
+import dtu.processmining.XLogHelper;
 
-public class DCRClassifier {	
-	public static void classify(DCRGraph dcrGraph, XLog log, boolean openWorld) 
-	{
-		//System.out.println(dcrGraph.toString());
-		
-		try {
-			long startTime = System.nanoTime();			
-			for (XTrace trace : log) {	
-					String traceId = XESTools.xTraceID(trace);	
-					
-					LinkedList<String> t = new LinkedList<>();
-					for (XEvent event : trace) {
-						if (event != null) {
-							try {
-								String e = XESTools.xEventName(event);								
-								t.add(e);
-							} catch (LabelTypeException e) {
-								e.printStackTrace();
-							}
-						}
-					}
-					
-					//System.out.println(t);
-					boolean actualResult;
-					if (openWorld)
-						actualResult = dcrGraph.canRunOpenWorld(t);
-					else
-						actualResult = dcrGraph.canRunClosedWorld(t);
-						
-					
-					XAttributeMap attrs = trace.getAttributes(); 
+public class DCRClassifier {
+	public static void classify(DCRGraph dcrGraph, XLog log, boolean openWorld) {
+		// System.out.println(dcrGraph.toString());
 
-					/*
-					System.out.println(actualResult);
-					System.out.println(dcrGraph.canRunOpenWorld(t));
-					System.out.println(dcrGraph.whyInvalidRunOpenWorld(t));
-					System.out.println(dcrGraph.canRunClosedWorld(t));
-					System.out.println(dcrGraph.whyInvalidRunClosedWorld(t));
-					*/
-					
-					
-					if (actualResult)						
-						attrs.put("pdc:isPos", new XAttributeBooleanImpl("pdc:isPos", true));
-					else
-						attrs.put("pdc:isPos", new XAttributeBooleanImpl("pdc:isPos", false));						
-				}	
+		long startTime = System.nanoTime();
+		for (XTrace trace : log) {
+			String traceId = XLogHelper.getName(trace);
+
+			LinkedList<String> t = new LinkedList<>();
+			for (XEvent event : trace) {
+				if (event != null) {
+					String e = XLogHelper.getName(event);
+					t.add(e);
+				}
 			}
-		catch (LabelTypeException e1) {
-			e1.printStackTrace();
+
+			// System.out.println(t);
+			boolean actualResult;
+			if (openWorld)
+				actualResult = dcrGraph.canRunOpenWorld(t);
+			else
+				actualResult = dcrGraph.canRunClosedWorld(t);
+
+			XAttributeMap attrs = trace.getAttributes();
+
+			/*
+			 * System.out.println(actualResult);
+			 * System.out.println(dcrGraph.canRunOpenWorld(t));
+			 * System.out.println(dcrGraph.whyInvalidRunOpenWorld(t));
+			 * System.out.println(dcrGraph.canRunClosedWorld(t));
+			 * System.out.println(dcrGraph.whyInvalidRunClosedWorld(t));
+			 */
+
+			if (actualResult)
+				attrs.put("pdc:isPos", new XAttributeBooleanImpl("pdc:isPos", true));
+			else
+				attrs.put("pdc:isPos", new XAttributeBooleanImpl("pdc:isPos", false));
 		}
-		
+
 	}
 
 }

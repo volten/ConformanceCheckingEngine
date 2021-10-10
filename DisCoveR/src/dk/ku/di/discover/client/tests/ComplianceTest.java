@@ -23,13 +23,10 @@
  */
 package dk.ku.di.discover.client.tests;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.IOException;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.qmpm.logtrie.exceptions.FileLoadException;
 
 import dk.ku.di.discover.client.Compliance;
 
@@ -40,7 +37,7 @@ class ComplianceTest {
 	}
 
 	@Test
-	void testCheckCompliance() throws FileLoadException, IOException {
+	void testCheckCompliance() throws Exception, IOException {
 		Compliance.checkCompliance("./logs/compliance.xes", "./dcrxml/", "./logs/compliance_labels.csv");
 	}
 
