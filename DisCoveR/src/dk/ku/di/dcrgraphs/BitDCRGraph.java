@@ -23,24 +23,6 @@
  */
 package dk.ku.di.dcrgraphs;
 
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-
-import org.eclipse.persistence.jaxb.JAXBContextProperties;
-
-import dk.ku.di.discover.modelrecommendation.DCRModelAdvice;
-import dk.ku.di.discover.modelrecommendation.DCRModelRecommendation;
-import dk.ku.di.discover.modelrecommendation.RelationAdvice;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -51,14 +33,30 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
+import org.eclipse.persistence.jaxb.JAXBContextProperties;
+
+import dk.ku.di.discover.modelrecommendation.DCRModelAdvice;
+import dk.ku.di.discover.modelrecommendation.RelationAdvice;
+import dtu.dcr.model.Relation.TYPES;
 import javafx.util.Pair;
 
 //
 public class BitDCRGraph {
 
 	String title;
-	BitDCRMarking marking = new BitDCRMarking();	
+	BitDCRMarking marking = new BitDCRMarking();
 	protected HashMap<Integer, String> idToEvent = new HashMap<>();
 	protected HashMap<String, Integer> eventToId = new HashMap<>();
 	public HashMap<Integer, BitSet> conditionsFor = new HashMap<>();
@@ -133,59 +131,58 @@ public class BitDCRGraph {
 		if (!this.idToEvent.keySet().contains(event)) {
 			return false;
 		} // throw new Exception("Trying to execute invalid event."); }
-		
+
 		// check included
 		if (!marking.included.get(event)) {
 			return false;
 		}
-		
+
 		// check conditions
 		if (this.conditionsFor.get(event).intersects(marking.blockCond())) {
 			return false;
 		}
-		
+
 		// check milestones
 		if (this.milestonesFor.get(event).intersects(marking.blockMilestone())) {
 			return false;
 		}
 		return true;
 	}
-	
 
-	
 	public String whyNotEnabled(final BitDCRMarking marking, final int event) {
 		if (!this.idToEvent.keySet().contains(event)) {
 			return "Event " + this.idToEvent.get(event) + " unkown.";
 		} // throw new Exception("Trying to execute invalid event."); }
-		
+
 		// check included
 		if (!marking.included.get(event)) {
 			return "Event " + this.idToEvent.get(event) + " not included.";
 		}
-		
+
 		// check conditions
 		if (this.conditionsFor.get(event).intersects(marking.blockCond())) {
 			String reason = "Event " + this.idToEvent.get(event) + " has at least one blocking condition: ";
 			for (int i = marking.blockCond().nextSetBit(0); i != -1; i = marking.blockCond().nextSetBit(i + 1)) {
 				reason += this.idToEvent.get(i) + " ";
-			}							
-			return  reason;
+			}
+			return reason;
 		}
-		
+
 		// check milestones
 		if (this.milestonesFor.get(event).intersects(marking.blockMilestone())) {
 			String reason = "Event " + this.idToEvent.get(event) + " has at least one blocking milestone: ";
-			for (int i = marking.blockMilestone().nextSetBit(0); i != -1; i = marking.blockMilestone().nextSetBit(i + 1)) {
+			for (int i = marking.blockMilestone().nextSetBit(0); i != -1; i = marking.blockMilestone()
+					.nextSetBit(i + 1)) {
 				reason += this.idToEvent.get(i) + " ";
-			}				
-			return  reason;
+			}
+			return reason;
 		}
 		return "Event " + this.idToEvent.get(event) + " IS ENABLED.";
-	}	
+	}
 
 	public Set<Integer> getAllEnabled(BitDCRMarking m) {
 		HashSet<Integer> result = new HashSet<>();
-		// TODO: could probably do a cool matrix transformation here 
+		// TODO: could probably do a cool matrix transformation here
 		for (int e : this.idToEvent.keySet()) {
 			if (this.enabled(m, e)) {
 				result.add(e);
@@ -229,7 +226,7 @@ public class BitDCRGraph {
 		}
 		return m;
 	}
-	
+
 	public String whyInvalidRun(final BitDCRMarking marking, List<Integer> trace) {
 		BitDCRMarking m = marking.clone();
 		for (int e : trace) {
@@ -239,21 +236,19 @@ public class BitDCRGraph {
 				m = this.execute(m, e);
 			}
 		}
-		if (!m.isAccepting())
-		{
+		if (!m.isAccepting()) {
 			String reason = "Run does not end in accepting marking, the following are included pending responses: ";
 			for (int i = m.blockMilestone().nextSetBit(0); i != -1; i = m.blockMilestone().nextSetBit(i + 1)) {
 				reason += this.idToEvent.get(i) + " ";
-			}		
-			
+			}
+
 			return reason;
-			//return "Run does not end in accepting marking, the following are included pending responses: " + m.blockMilestone().toString();
+			// return "Run does not end in accepting marking, the following are included
+			// pending responses: " + m.blockMilestone().toString();
 		}
-		
+
 		return "VALID RUN";
-	}	
-	
-	
+	}
 
 	public BitDCRMarking defaultInitialMarking() {
 		final BitDCRMarking result = new BitDCRMarking();
@@ -308,7 +303,10 @@ public class BitDCRGraph {
 		result.append(" #Responses: " + this.relationAsPairs(this.responsesTo).size() + NEW_LINE);
 		result.append(" #Includes: " + this.relationAsPairs(this.includesTo).size() + NEW_LINE);
 		result.append(" #Excludes: " + this.relationAsPairs(this.excludesTo).size() + NEW_LINE);
-		result.append(" #Relations: " + (this.relationAsPairs(this.conditionsFor).size() + this.relationAsPairs(this.responsesTo).size() + this.relationAsPairs(this.includesTo).size() + this.relationAsPairs(this.excludesTo).size()) + NEW_LINE);
+		result.append(" #Relations: "
+				+ (this.relationAsPairs(this.conditionsFor).size() + this.relationAsPairs(this.responsesTo).size()
+						+ this.relationAsPairs(this.includesTo).size() + this.relationAsPairs(this.excludesTo).size())
+				+ NEW_LINE);
 		result.append(" Event IDs: " + this.idToEvent.keySet() + NEW_LINE);
 		result.append(" IdToEvents: ");
 		for (final int e : this.idToEvent.keySet()) {
@@ -347,385 +345,374 @@ public class BitDCRGraph {
 	}
 
 	public int numOfRelations() {
-		return this.relationAsPairs(this.conditionsFor).size() + this.relationAsPairs(this.responsesTo).size() + this.relationAsPairs(this.includesTo).size() + this.relationAsPairs(this.excludesTo).size();
+		return this.relationAsPairs(this.conditionsFor).size() + this.relationAsPairs(this.responsesTo).size()
+				+ this.relationAsPairs(this.includesTo).size() + this.relationAsPairs(this.excludesTo).size();
 	}
-	
-	public String getLabel(int event)
-	{
+
+	public String getLabel(int event) {
 		return idToEvent.get(event);
 	}
-	
-	public int getEvent(String event)
-	{
-		if(!eventToId.containsKey(event))
+
+	public int getEvent(String event) {
+		if (!eventToId.containsKey(event))
 			return -1;
 		return eventToId.get(event);
-	}	
-	
-	
-	public void toDCRLanguage(String fileName)
-	{
+	}
+
+	public void toDCRLanguage(String fileName) {
 		/*
-		try (PrintWriter out = new PrintWriter(fileName)) {
-		    out.println(toDCRLanguage());
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}*/
+		 * try (PrintWriter out = new PrintWriter(fileName)) {
+		 * out.println(toDCRLanguage()); } catch (FileNotFoundException e) {
+		 * e.printStackTrace(); }
+		 */
 		try {
-			Writer out = new BufferedWriter(new OutputStreamWriter(
-		    new FileOutputStream(fileName), "UTF-8"));
+			Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), "UTF-8"));
 			out.write(toDCRLanguage());
 			out.close();
-		} catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public void toModelRecommendationFormat(String fileName)
-	{
-	   JAXBContext jc;
-	   try {
-			 Map<String, Object> properties = new HashMap<String, Object>(2);
-			 properties.put(JAXBContextProperties.MEDIA_TYPE, "application/json");
-			 properties.put(JAXBContextProperties.JSON_INCLUDE_ROOT, false);
-			jc = JAXBContext.newInstance("dk.ku.di.discover.modelrecommendation", DCRModelAdvice.class.getClassLoader(), properties);
+
+	public void toModelRecommendationFormat(String fileName) {
+		JAXBContext jc;
+		try {
+			Map<String, Object> properties = new HashMap<String, Object>(2);
+			properties.put(JAXBContextProperties.MEDIA_TYPE, "application/json");
+			properties.put(JAXBContextProperties.JSON_INCLUDE_ROOT, false);
+			jc = JAXBContext.newInstance("dk.ku.di.discover.modelrecommendation", DCRModelAdvice.class.getClassLoader(),
+					properties);
 			Marshaller m = jc.createMarshaller();
-		   File f = new File(fileName);
-		   DCRModelAdvice a = graphToRecommendation(this);
-		   m.marshal(a, f);
-	   } catch (JAXBException e) {
-		   // TODO Auto-generated catch block
-		   e.printStackTrace();
-	   }		
-	 }
+			File f = new File(fileName);
+			DCRModelAdvice a = graphToRecommendation(this);
+			m.marshal(a, f);
+		} catch (JAXBException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	private DCRModelAdvice graphToRecommendation(BitDCRGraph g) {
 		DCRModelAdvice result = new DCRModelAdvice();
-		
+
 		for (final Entry<Integer, BitSet> kvp : g.conditionsTo.entrySet()) {
-			int source = kvp.getKey(); 
+			int source = kvp.getKey();
 			BitSet targets = kvp.getValue();
 			for (Integer i : g.getEvents())
-				if (targets.get(i))
-				{
+				if (targets.get(i)) {
 					result.relations.add(new RelationAdvice("condition", g.getLabel(source), g.getLabel(i)));
-				}			
+				}
 		}
-		
+
 		for (final Entry<Integer, BitSet> kvp : g.responsesTo.entrySet()) {
-			int source = kvp.getKey(); 
+			int source = kvp.getKey();
 			BitSet targets = kvp.getValue();
 			for (Integer i : g.getEvents())
-				if (targets.get(i))
-				{
+				if (targets.get(i)) {
 					result.relations.add(new RelationAdvice("response", g.getLabel(source), g.getLabel(i)));
-				}			
+				}
 		}
-		
-		
+
 		for (final Entry<Integer, BitSet> kvp : g.includesTo.entrySet()) {
-			int source = kvp.getKey(); 
+			int source = kvp.getKey();
 			BitSet targets = kvp.getValue();
 			for (Integer i : g.getEvents())
-				if (targets.get(i))
-				{
+				if (targets.get(i)) {
 					result.relations.add(new RelationAdvice("include", g.getLabel(source), g.getLabel(i)));
-				}			
-		}				
-		
-		
+				}
+		}
+
 		for (final Entry<Integer, BitSet> kvp : g.excludesTo.entrySet()) {
-			int source = kvp.getKey(); 
+			int source = kvp.getKey();
 			BitSet targets = kvp.getValue();
 			for (Integer i : g.getEvents())
-				if (targets.get(i))
-				{
+				if (targets.get(i)) {
 					result.relations.add(new RelationAdvice("exclude", g.getLabel(source), g.getLabel(i)));
-				}			
-		}						
-		
+				}
+		}
+
 		return result;
-	}	
-	
-	static public BitDCRGraph fromCSVFormat(String fileName)
-	{
+	}
+
+	static public BitDCRGraph fromCSVFormat(String fileName) {
 		BitDCRGraph g = new BitDCRGraph();
-		
-	      
-	        BufferedReader br = null;
-	        String line = "";
-	        String cvsSplitBy = ",";
 
-	        try {
+		BufferedReader br = null;
+		String line = "";
+		String cvsSplitBy = ",";
 
-	            br = new BufferedReader(new FileReader(fileName));
-	            while ((line = br.readLine()) != null) {
+		try {
 
-	                // use comma as separator
-	                String[] fields = line.split(cvsSplitBy);
-	                String command = fields[0];
-	                switch(command) {
-	                case "EVENT":
-	                {
-	                	String e = fields[1].trim();
-	                	g.addEvent(e);	                
-	                	break;
-	                }
-	                case "CONDITION":
-	                {
-	            		String e1 = fields[1].trim();
-	            		String e2 = fields[2].trim();
-	            		int src = g.getEvent(e1);
-	            		int trg = g.getEvent(e2);
-	            		g.addCondition(src, trg);	                	
-		                break;
-	                }
-	                case "RESPONSE":
-	                {
-	            		String e1 = fields[1].trim();
-	            		String e2 = fields[2].trim();
-	            		int src = g.getEvent(e1);
-	            		int trg = g.getEvent(e2);
-	            		g.addResponse(src, trg);	                	
-		                break;
-	                }
-	                case "INCLUDE":
-	                {
-	            		String e1 = fields[1].trim();
-	            		String e2 = fields[2].trim();
-	            		int src = g.getEvent(e1);
-	            		int trg = g.getEvent(e2);
-	            		g.addInclude(src, trg);	                	
-		                break;
-	                }
-	                case "EXCLUDE":
-	                {
-	            		String e1 = fields[1].trim();
-	            		String e2 = fields[2].trim();
-	            		int src = g.getEvent(e1);
-	            		int trg = g.getEvent(e2);
-	            		g.addExclude(src, trg);	                	
-		                break;
-	                }	                
-	              } 
-	            }
+			br = new BufferedReader(new FileReader(fileName));
+			while ((line = br.readLine()) != null) {
 
-	        } catch (FileNotFoundException e) {
-	            e.printStackTrace();
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        } finally {
-	            if (br != null) {
-	                try {
-	                    br.close();
-	                } catch (IOException e) {
-	                    e.printStackTrace();
-	                }
-	            }
-	        }
-		
-	    g.marking = g.defaultInitialMarking();
+				// use comma as separator
+				String[] fields = line.split(cvsSplitBy);
+				String command = fields[0];
+				switch (command) {
+				case "EVENT": {
+					String e = fields[1].trim();
+					g.addEvent(e);
+					break;
+				}
+				case "CONDITION": {
+					String e1 = fields[1].trim();
+					String e2 = fields[2].trim();
+					int src = g.getEvent(e1);
+					int trg = g.getEvent(e2);
+					g.addCondition(src, trg);
+					break;
+				}
+				case "RESPONSE": {
+					String e1 = fields[1].trim();
+					String e2 = fields[2].trim();
+					int src = g.getEvent(e1);
+					int trg = g.getEvent(e2);
+					g.addResponse(src, trg);
+					break;
+				}
+				case "INCLUDE": {
+					String e1 = fields[1].trim();
+					String e2 = fields[2].trim();
+					int src = g.getEvent(e1);
+					int trg = g.getEvent(e2);
+					g.addInclude(src, trg);
+					break;
+				}
+				case "EXCLUDE": {
+					String e1 = fields[1].trim();
+					String e2 = fields[2].trim();
+					int src = g.getEvent(e1);
+					int trg = g.getEvent(e2);
+					g.addExclude(src, trg);
+					break;
+				}
+				}
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		g.marking = g.defaultInitialMarking();
 		return g;
 	}
-	
-	public void toCSVFormat(String fileName)
-	{
+
+	public void toCSVFormat(String fileName) {
 		try (PrintWriter out = new PrintWriter(fileName)) {
-		    out.println(toCSVFormat());
+			out.println(toCSVFormat());
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-	}	
-	
-	public String toCSVFormat()
-	{
+	}
+
+	public String toCSVFormat() {
 		final StringBuilder result = new StringBuilder();
 		final String NEW_LINE = System.getProperty("line.separator");
-		
-		
-		for (int i : idToEvent.keySet())
-		{
+
+		for (int i : idToEvent.keySet()) {
 			String e = idToEvent.get(i);
 			result.append("EVENT");
 			result.append(",");
-			//result.append(this.marking.executed.get(i) + ",");
-			//result.append(this.marking.included.get(i) + ",");
-			//result.append(this.marking.pending.get(i) + "");
+			// result.append(this.marking.executed.get(i) + ",");
+			// result.append(this.marking.included.get(i) + ",");
+			// result.append(this.marking.pending.get(i) + "");
 			result.append(e);
-			result.append(NEW_LINE);							
+			result.append(NEW_LINE);
 		}
-		
-		
+
 		for (int i : idToEvent.keySet())
-			for (int j : idToEvent.keySet())				
+			for (int j : idToEvent.keySet())
 				if (conditionsFor.get(i).get(j))
 					result.append("CONDITION," + idToEvent.get(j) + "," + idToEvent.get(i) + NEW_LINE);
-		
+
 		for (int i : idToEvent.keySet())
-			for (int j : idToEvent.keySet())				
+			for (int j : idToEvent.keySet())
 				if (responsesTo.get(i).get(j))
 					result.append("RESPONSE," + idToEvent.get(i) + "," + idToEvent.get(j) + NEW_LINE);
 
 		for (int i : idToEvent.keySet())
-			for (int j : idToEvent.keySet())				
+			for (int j : idToEvent.keySet())
 				if (includesTo.get(i).get(j))
-					result.append("INCLUDE," + idToEvent.get(i) + "," + idToEvent.get(j) + NEW_LINE);			
+					result.append("INCLUDE," + idToEvent.get(i) + "," + idToEvent.get(j) + NEW_LINE);
 
 		for (int i : idToEvent.keySet())
-			for (int j : idToEvent.keySet())				
+			for (int j : idToEvent.keySet())
 				if (excludesTo.get(i).get(j))
 					result.append("EXCLUDE," + idToEvent.get(i) + "," + idToEvent.get(j) + NEW_LINE);
-		
 
 		return result.toString();
-		
+
 	}
-	
-	
-	public String toDCRLanguage2()
-	{
+
+	public dtu.dcr.model.Process toDcrModel() {
+		dtu.dcr.model.Process p = new dtu.dcr.model.Process();
+		for (int i : idToEvent.keySet()) {
+			String e = idToEvent.get(i);
+			p.addActivity(e);
+		}
+
+		for (int i : idToEvent.keySet())
+			for (int j : idToEvent.keySet())
+				if (conditionsFor.get(i).get(j))
+					p.addRelation(p.getActivityFromName(idToEvent.get(j)), TYPES.CONDITION,
+							p.getActivityFromName(idToEvent.get(i)));
+
+		for (int i : idToEvent.keySet())
+			for (int j : idToEvent.keySet())
+				if (conditionsFor.get(i).get(j))
+					p.addRelation(p.getActivityFromName(idToEvent.get(i)), TYPES.RESPONSE,
+							p.getActivityFromName(idToEvent.get(j)));
+
+		for (int i : idToEvent.keySet())
+			for (int j : idToEvent.keySet())
+				if (conditionsFor.get(i).get(j))
+					p.addRelation(p.getActivityFromName(idToEvent.get(i)), TYPES.INCLUDE,
+							p.getActivityFromName(idToEvent.get(j)));
+
+		for (int i : idToEvent.keySet())
+			for (int j : idToEvent.keySet())
+				if (conditionsFor.get(i).get(j))
+					p.addRelation(p.getActivityFromName(idToEvent.get(i)), TYPES.EXCLUDE,
+							p.getActivityFromName(idToEvent.get(j)));
+
+		return p;
+	}
+
+	public String toDCRLanguage2() {
 		final StringBuilder result = new StringBuilder();
 		final String NEW_LINE = System.getProperty("line.separator");
-		
-		
-		for (int i : idToEvent.keySet())
-		{
+
+		for (int i : idToEvent.keySet()) {
 			String e = idToEvent.get(i);
 			result.append(e);
 			result.append("(");
-			//result.append(this.marking.executed.get(i) + ",");
-			//result.append(this.marking.included.get(i) + ",");
-			//result.append(this.marking.pending.get(i) + "");
+			// result.append(this.marking.executed.get(i) + ",");
+			// result.append(this.marking.included.get(i) + ",");
+			// result.append(this.marking.pending.get(i) + "");
 			result.append("0,1,0");
-			
-			result.append(")");		
-			result.append("{" + NEW_LINE);	
 
-			
-			for (int j : idToEvent.keySet())				
+			result.append(")");
+			result.append("{" + NEW_LINE);
+
+			for (int j : idToEvent.keySet())
 				if (conditionsFor.get(i).get(j))
 					result.append("  " + idToEvent.get(j) + " -->* " + e + NEW_LINE);
-			
-			for (int j : idToEvent.keySet())				
+
+			for (int j : idToEvent.keySet())
 				if (responsesTo.get(i).get(j))
 					result.append("  " + e + " *--> " + idToEvent.get(j) + NEW_LINE);
-			
-			for (int j : idToEvent.keySet())				
-				if (includesTo.get(i).get(j))
-					result.append("  " + e + " -->+ " + idToEvent.get(j) + NEW_LINE);			
 
-			for (int j : idToEvent.keySet())				
+			for (int j : idToEvent.keySet())
+				if (includesTo.get(i).get(j))
+					result.append("  " + e + " -->+ " + idToEvent.get(j) + NEW_LINE);
+
+			for (int j : idToEvent.keySet())
 				if (excludesTo.get(i).get(j))
 					result.append("  " + e + " -->% " + idToEvent.get(j) + NEW_LINE);
-			
-			result.append("}," + NEW_LINE);			
+
+			result.append("}," + NEW_LINE);
 		}
-		
+
 		return result.toString();
-	}	
-	
-	
-	public String toDCRLanguage()
-	{
-		
+	}
+
+	public String toDCRLanguage() {
+
 		final StringBuilder result = new StringBuilder();
 		final String NEW_LINE = System.getProperty("line.separator");
-	
+
 		addRelationToLanguage(result, conditionsTo, "-->*");
 		addRelationToLanguage(result, responsesTo, "*-->");
 		addRelationToLanguage(result, includesTo, "-->+");
-		addRelationToLanguage(result, excludesTo, "-->%");		
-		
+		addRelationToLanguage(result, excludesTo, "-->%");
+
 		return result.toString();
 	}
-	
-	
+
 	private void addRelationToLanguage(StringBuilder result, HashMap<Integer, BitSet> rel, String symbol) {
 
 		final String NEW_LINE = System.getProperty("line.separator");
-		for (int i : rel.keySet()) {	
+		for (int i : rel.keySet()) {
 			boolean first = true;
-			for (int j : rel.keySet()) {				
+			for (int j : rel.keySet()) {
 				if (rel.get(i).get(j)) {
-					if (first)
-					{
+					if (first) {
 						first = false;
 						result.append("\"" + idToEvent.get(i) + "\"");
 						result.append(" " + symbol + " (");
 						result.append("\"" + idToEvent.get(j) + "\"");
-					}					
-					else
-					{
+					} else {
 						result.append(" ");
 						result.append("\"" + idToEvent.get(j) + "\"");
 					}
-					
+
 				}
 			}
-			if (!first)
-			{
+			if (!first) {
 				result.append(")");
 				result.append(NEW_LINE);
 			}
 		}
 	}
-	
-	
-	public void toDCRLanguageLabels(String fileName)
-	{
+
+	public void toDCRLanguageLabels(String fileName) {
 		try (PrintWriter out = new PrintWriter(fileName)) {
-		    out.println(toDCRLanguageLabels());
+			out.println(toDCRLanguageLabels());
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
-	public String toDCRLanguageLabels()
-	{
-		
+
+	public String toDCRLanguageLabels() {
+
 		final StringBuilder result = new StringBuilder();
 		final String NEW_LINE = System.getProperty("line.separator");
 
-		for (final int e : this.idToEvent.keySet()) { 
+		for (final int e : this.idToEvent.keySet()) {
 			result.append(e);
 			result.append("[\"" + idToEvent.get(e) + "\"]");
-			result.append(NEW_LINE);            
-		}			
-		
+			result.append(NEW_LINE);
+		}
+
 		addRelationToLanguageLabels(result, conditionsTo, "-->*");
 		addRelationToLanguageLabels(result, responsesTo, "*-->");
 		addRelationToLanguageLabels(result, includesTo, "-->+");
-		addRelationToLanguageLabels(result, excludesTo, "-->%");		
-		
+		addRelationToLanguageLabels(result, excludesTo, "-->%");
+
 		return result.toString();
 	}
-	
-	
+
 	private void addRelationToLanguageLabels(StringBuilder result, HashMap<Integer, BitSet> rel, String symbol) {
 		final String NEW_LINE = System.getProperty("line.separator");
-		for (int i : rel.keySet()) {	
+		for (int i : rel.keySet()) {
 			boolean first = true;
-			for (int j : rel.keySet()) {				
+			for (int j : rel.keySet()) {
 				if (rel.get(i).get(j)) {
-					if (first)
-					{
+					if (first) {
 						first = false;
 						result.append(i);
 						result.append(" " + symbol + " (");
 						result.append(j);
-					}					
-					else
-					{
+					} else {
 						result.append(" ");
 						result.append(j);
 					}
-					
+
 				}
 			}
-			if (!first)
-			{
+			if (!first) {
 				result.append(")");
 				result.append(NEW_LINE);
 			}

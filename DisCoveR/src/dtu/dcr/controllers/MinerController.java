@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import dk.ku.di.dcrgraphs.BitDCRGraph;
 import dk.ku.di.discover.algorithms.bitparnek.BitParNek;
 import dk.ku.di.discover.algorithms.bitparnek.BitParNekLogAbstractions;
+import dtu.dcr.model.Process;
 import dtu.processmining.XLogHelper;
 
 @RestController
@@ -25,7 +26,7 @@ import dtu.processmining.XLogHelper;
 public class MinerController {
 
 	@PostMapping("/mine")
-	public ResponseEntity<String> mine(@RequestParam("file") MultipartFile file) {
+	public ResponseEntity<Process> mine(@RequestParam("file") MultipartFile file) {
 		File tmpFile = null;
 		try {
 			String extension = "";
@@ -46,9 +47,9 @@ public class MinerController {
 			BitDCRGraph g = disco.mine(helper); //
 			disco.findAdditionalConditions(helper, g);
 			disco.clean(helper, g);
-			return ResponseEntity.ok(g.toDCRLanguage());
+			return ResponseEntity.ok(g.toDcrModel());
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 }
