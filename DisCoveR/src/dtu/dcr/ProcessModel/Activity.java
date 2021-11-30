@@ -1,7 +1,6 @@
-package dtu.dcr.model;
+package dtu.dcr.ProcessModel;
 
 import java.util.UUID;
-
 import lombok.Getter;
 
 public class Activity {
@@ -10,6 +9,8 @@ public class Activity {
 	private String id;
 	@Getter
 	private String name;
+	@Getter
+    private boolean[] markings = new boolean[3];
 
 	public Activity() {
 
@@ -23,6 +24,10 @@ public class Activity {
 	public Activity(String name) {
 		this.id = UUID.randomUUID().toString();
 		this.name = name;
+	}
+
+	public void setMarkings(boolean state, int idx) {
+		this.markings[idx] = state;
 	}
 
 	@Override

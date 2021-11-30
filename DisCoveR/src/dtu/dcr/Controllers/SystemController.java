@@ -1,4 +1,4 @@
-package dtu.dcr.controllers;
+package dtu.dcr.Controllers;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;

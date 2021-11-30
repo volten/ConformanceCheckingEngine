@@ -1,4 +1,4 @@
-package dtu.dcr.controllers;
+package dtu.dcr.Controllers;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import dk.ku.di.dcrgraphs.BitDCRGraph;
 import dk.ku.di.discover.algorithms.bitparnek.BitParNek;
 import dk.ku.di.discover.algorithms.bitparnek.BitParNekLogAbstractions;
-import dtu.dcr.model.Process;
+import dtu.dcr.ProcessModel.Model;
 import dtu.processmining.XLogHelper;
 
 @RestController
@@ -26,7 +26,7 @@ import dtu.processmining.XLogHelper;
 public class MinerController {
 
 	@PostMapping("/mine")
-	public ResponseEntity<Process> mine(@RequestParam("file") MultipartFile file) {
+	public ResponseEntity<Model> mine(@RequestParam("file") MultipartFile file) {
 		File tmpFile = null;
 		try {
 			String extension = "";
