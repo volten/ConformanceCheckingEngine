@@ -3,6 +3,7 @@ package dtu.dcr.ProcessModel;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.ArrayList;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import lombok.Getter;
 
@@ -15,10 +16,6 @@ public class Model {
 	@Getter
 	private HashMap<Activity, ArrayList<ImmutablePair<TYPES, Activity>>> relations = 
 		new HashMap<Activity, ArrayList<ImmutablePair<TYPES, Activity>>>();
-	@Getter
-	private ArrayList<Relation> violations = new ArrayList<Relation>();
-	
-
 
 	public Activity addActivity(String activityName) {
 		Activity a = new Activity(activityName);
@@ -69,16 +66,5 @@ public class Model {
 
 	public ArrayList<ImmutablePair<TYPES, Activity>> getAllRelations(Activity source) {
 			return relations.get(source);
-	}
-
-	public void addViolatingRelation(Relation relation) {
-		violations.add(relation);
-	}
-	public void addViolatingRelation(Activity source, TYPES constraint, Activity target) {
-		violations.add(new Relation(source, constraint, target));
-	}
-	public void addViolatingRelation(Activity source, ImmutablePair<TYPES, Activity> constraintTuple) {
-		violations.add(new Relation(source, constraintTuple));
-	}
-	
+	}	
 }
