@@ -22,10 +22,11 @@ public class Algorithm {
     @Getter 
     private ArrayList<Trace> traces;
     @Getter
-    private ArrayList<Relation> violations = new ArrayList<Relation>();
+    private ArrayList<Relation> violatingRelations = new ArrayList<Relation>();
+    @Getter ArrayList<ImmutablePair<Trace, String>> violatingTraces = new ArrayList<ImmutablePair<Trace, String>>();
  
 
-    public void setConstraint(Trace trace, Model relations) {
+    public void checkRelationConstraints(Trace trace, Model relations) {
         ArrayList<ImmutablePair<Relation.TYPES, Activity>> constraints = relations.getAllRelations(trace);
 
         for (ImmutablePair<Relation.TYPES, Activity> constraintTuple : constraints) {
@@ -39,7 +40,7 @@ public class Algorithm {
                 case "RESPONSE":
                     /* if relation.target is included */
                     /* set relation.target as pending and add to pending set */
-                    if (constraintTuple.getValue().getMarkings()[0]) {
+                    if (includedSet.contains(constraintTuple.getValue())) {
                         constraintTuple.getValue().setMarkings(true, 1);
                         pendingSet.add(constraintTuple.getValue()); 
                 }
@@ -53,6 +54,7 @@ public class Algorithm {
                     /* set relaton.target as excluded */
                     /* add relation.target to excludedSet and remove from includedSet */
                     constraintTuple.getValue().setMarkings(false, 0);
+                    excludedSet.add(constraintTuple.getValue());
                     /* set relation.target as excluded */
 
                 case "MILESTONE": 
@@ -71,40 +73,35 @@ public class Algorithm {
         for (ImmutablePair<Relation.TYPES, Activity> conditionRelation : conditionRelations) {
             if (conditionRelation.getLeft().toString().equals("CONDITION") & 
                 conditionRelation.getRight().equals(source) & 
-                conditionRelation.getRight().getMarkings()[2]) {
+                executedSet.contains(conditionRelation.getRight())) {
                     return true;
             } 
         }
         return false;
     }
 
-    public boolean isEventIncluded(Trace trace, Model activities) {
-        return activities.getActivityFromId(trace.getId()).getMarkings()[0];
-    }
-
-    public boolean isEventPending(Trace trace, Model activities) {
-        return activities.getActivityFromId(trace.getId()).getMarkings()[1];
-    }
-
-    public boolean isEventExecuted(Trace trace, Model activities) {
-        return activities.getActivityFromId(trace.getId()).getMarkings()[2];
-    }
-
-
     public void addViolatingRelation(Relation relation) {
-		violations.add(relation);
+		violatingRelations.add(relation);
 	}
 	public void addViolatingRelation(Activity source, Relation.TYPES constraint, Activity target) {
-		violations.add(new Relation(source, constraint, target));
+		violatingRelations.add(new Relation(source, constraint, target));
 	}
 	public void addViolatingRelation(Activity source, ImmutablePair<Relation.TYPES, Activity> constraintTuple) {
-		violations.add(new Relation(source, constraintTuple));
+		violatingRelations.add(new Relation(source, constraintTuple));
 	}
 
-    public void TraceReplay(Trace trace, Model processModel) {
+    public void TraceReplay(ArrayList<Trace> traces, Model processModel) {
+        for (Trace trace : traces){
+            if (processModel.getActivityFromId(trace.getId()) != null) {
+                if (!includedSet.contains(trace)) {
+                    ImmutablePair<Trace, String> violatingTrace = new ImmutablePair<Trace, String>(trace, "Excluded trace executed");
+                    violatingTraces.add(violatingTrace);
+                } 
+            checkRelationConstraints(trace, processModel);
 
+            }
+        }
         
-
         /* Load ProcessModel object */
 
         /* Load Traces object */
@@ -131,9 +128,7 @@ public class Algorithm {
             
             /* Flag activities which are pending as violations */
 
-            /* Oversee requirements of conformity and */
-
-            /* return conformity or list of violations */
+            /* See requirements of conformity and return conformity or list of violations */
     }
 
     
